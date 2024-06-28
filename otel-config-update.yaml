@@ -1,0 +1,54 @@
+receivers:
+  otlp:
+    protocols:
+      grpc: {}
+      http: {}
+  zipkin: {}
+
+processors:
+  batch: {}
+  resource:
+    attributes:
+      - key: test.key
+        value: "test-value"
+        action: insert
+exporters:
+  file/traces:
+    path: /log/otel/traces.log
+  file/metrics:
+    path: /log/otel/metrics.log
+  file/logs:
+    path: /log/otel/logs.log
+  otlp:
+    endpoint: "${JAEGER_ENDPOINT}"
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+  loki:
+    endpoint: "${LOKI_ENDPOINT}"
+    tls:
+      insecure: true
+  azuremonitor:
+    connection_string: "[INSERT APPLICATION INSIGHTS CONNECTION STRING HERE]"
+  debug: {}
+
+extensions:
+  health_check: {}
+  zpages:
+    endpoint: 55679
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp, zipkin]
+      processors: [batch, resource]
+      exporters: [debug, file/traces, otlp, azuremonitor]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, file/metrics, prometheus, azuremonitor]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, file/logs, loki, azuremonitor]
